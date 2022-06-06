@@ -35,4 +35,7 @@ authRouter.post(
 //forgot password
 authRouter.post('/forgot_password', authController.getEmailToResetPassword)
 
+//verification
+authRouter.post('/verification', authController.verificationCode)
+
 module.exports = authRouter
