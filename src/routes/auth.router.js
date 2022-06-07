@@ -1,4 +1,6 @@
 const authRouter = require('express').Router()
+const checkConfirmCode = require('../middlewares/checkConfirmCode')
+
 const authController = require('../controllers/auth.controller')
 const {
   validationErrorHandler,
@@ -37,5 +39,15 @@ authRouter.post('/forgot_password', authController.getEmailToResetPassword)
 
 //verification
 authRouter.post('/verification', authController.verificationCode)
+
+// Send code and reset password
+authRouter.patch(
+  '/reset_password',
+  checkConfirmCode,
+  validatePassword,
+  validatePasswordConfirm,
+  validationErrorHandler,
+  authController.resetPassword
+)
 
 module.exports = authRouter

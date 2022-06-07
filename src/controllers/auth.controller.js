@@ -1,6 +1,7 @@
-const UserModel = require('../models/users')
+const UserModel = require('../models/Users')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const ConfirmCodeModel = require('../models/ConfirmCode')
 const sendCodeToEmail = require('../utils/sendCodeToEmail')
 const generateCode = require('../utils/generateCode')
 const putConfirmCodeToDb = require('../utils/putCodeToDb')
@@ -151,9 +152,42 @@ async function verificationCode(req, res) {
   }
 }
 
+async function resetPassword(req, res) {
+  try {
+    // Get phone and password from req.body
+    const { email, password } = req.body
+
+    // Here email we get from frontend and we now what it is right email //
+    // Find user in DB
+    const user = await UserModel.findOne({ email })
+    // Change user password
+    const hashedPassword = await bcrypt.hash(password, 12)
+    user.password = hashedPassword
+    await user.save()
+
+    // Change confirm code status in DB
+    const codeInfo = await ConfirmCodeModel.findOne({
+      userId: user._id,
+    }).populate('userId')
+    codeInfo.isUsed = true
+    await codeInfo.save()
+
+    res.status(201).json({
+      message: 'Password was changed successfully.',
+    })
+  } catch (e) {
+    console.log(`Error in file: ${__filename}!`)
+    console.log(e.message)
+    res.status(500).json({
+      errorType: 'Server side error!',
+      errorMsg: e.message,
+    })
+  }
+}
 module.exports = {
   register,
   loginWithEmail,
   getEmailToResetPassword,
   verificationCode,
+  resetPassword,
 }

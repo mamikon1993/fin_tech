@@ -34,7 +34,7 @@ const validatePassword = body('password')
   .isLength({ min: 8, max: 20 })
   .withMessage('Password must contain from 8 to 20 symbols')
   .matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$@!%&*?=+-])([A-Za-z\d#$@!%&*?=+-]){8,30}$/
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$@!%&*?=+-,.])([A-Za-z\d#$@!%&*?=+-,.]){8,30}$/
   )
   .withMessage(
     'Password must contain minimum one capital letter, minimum one small letter, minimum one number and minimum one special symbol like [#$@!%&*?=+-].'
