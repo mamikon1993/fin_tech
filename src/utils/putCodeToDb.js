@@ -9,7 +9,7 @@ async function putConfirmCodeToDb(userId, code) {
 
     // Code valid 1 day
     let validTime = new Date()
-    validTime.setMinutes(validTime.getMinutes() + 1)
+    validTime.setMinutes(validTime.getMinutes() + 2)
 
     // Hash code
     const hashCode = await bcrypt.hash(code, 10)

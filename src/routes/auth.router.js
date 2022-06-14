@@ -34,6 +34,9 @@ authRouter.post(
   authController.loginWithEmail
 )
 
+// Google login
+authRouter.post('/googleLogin', authController.loginWithGoogle)
+
 //forgot password
 authRouter.post('/forgot_password', authController.getEmailToResetPassword)
 
@@ -48,6 +51,14 @@ authRouter.patch(
   validatePasswordConfirm,
   validationErrorHandler,
   authController.resetPassword
+)
+
+authRouter.post(
+  '/verify_email',
+  validateEmail,
+  validationErrorHandler,
+  checkConfirmCode,
+  authController.emailVerification
 )
 
 module.exports = authRouter

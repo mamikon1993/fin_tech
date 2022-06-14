@@ -5,18 +5,25 @@ const bcrypt = require('bcrypt')
 async function checkConfirmCode(req, res, next) {
   try {
     // get confirmCode and phone from req.body
-    const { confirmCode, phone } = req.body
+    const { confirmCode, email } = req.body
 
     // Check we have code or not
     if (!confirmCode) {
       return res.status(400).json({
         errorType: 'Confirm code error!',
-        errorMsg: 'Please input confirm code.',
+        errorMessage: `Request body must contain confirm code.`,
       })
     }
 
     // find user in DB
-    const user = await UserModel.findOne({ phone })
+    const user = await UserModel.findOne({ email })
+
+    if (!user) {
+      return res.status(404).json({
+        errorType: 'Incorrect data error!',
+        errorMessage: 'User with such email does not exist.',
+      })
+    }
 
     // get info about code from DB
     const codeInfo = await ConfirmCodeModel.findOne({
@@ -27,8 +34,7 @@ async function checkConfirmCode(req, res, next) {
     if (!codeInfo) {
       return res.status(400).json({
         errorType: 'Confirm code error!',
-        errorMsg:
-          'In first you need to send confirm code in your phone number.',
+        errorMessage: 'In first user must send the code to your email.',
       })
     }
 
@@ -40,7 +46,7 @@ async function checkConfirmCode(req, res, next) {
       // Codes does not match
       return res.status(400).json({
         errorType: 'Confirm code error!',
-        errorMsg: 'User send the wrong confirm code.',
+        errorMessage: 'User send the wrong confirm code.',
       })
     }
 
@@ -51,7 +57,7 @@ async function checkConfirmCode(req, res, next) {
       // Code valid time expired
       return res.status(400).json({
         errorType: 'Confirm code error!',
-        errorMsg: 'Confirm code valid time is expired. Please send a new one.',
+        errorMessage: 'Confirm code valid time is expired.',
       })
     }
 
@@ -60,8 +66,7 @@ async function checkConfirmCode(req, res, next) {
       // This code already used
       return res.status(400).json({
         errorType: 'Confirm code error!',
-        errorMsg:
-          'You have already used this code to change/recover your password. Please send a new one.',
+        errorMessage: 'User have already used this code.',
       })
     }
 
@@ -72,7 +77,7 @@ async function checkConfirmCode(req, res, next) {
     console.log(e.message)
     res.status(500).json({
       errorType: 'Server side error!',
-      errorMsg: e.message,
+      errorMessage: e.message,
     })
   }
 }

@@ -1,10 +1,15 @@
 const UserModel = require('../models/Users')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+
+const { OAuth2Client } = require('google-auth-library')
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+
 const ConfirmCodeModel = require('../models/ConfirmCode')
 const sendCodeToEmail = require('../utils/sendCodeToEmail')
 const generateCode = require('../utils/generateCode')
 const putConfirmCodeToDb = require('../utils/putCodeToDb')
+const JWTHandler = require('../services/jwtHandler')
 
 async function register(req, res) {
   try {
@@ -184,10 +189,99 @@ async function resetPassword(req, res) {
     })
   }
 }
+
+async function loginWithGoogle(req, res) {
+  try {
+    const { tokenId } = req.body
+
+    // Get user data from token
+    const clientObject = await googleClient.verifyIdToken({
+      idToken: tokenId,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    })
+    const googleUserData = clientObject.payload
+
+    // Get user data from db
+    let userFromDb = await UserModel.findOne({ googleId: googleUserData.sub })
+
+    // Check user exist in db or no
+    if (!userFromDb) {
+      // If user registered first time
+      userFromDb = await UserModel.create({
+        googleId: googleUserData.sub,
+        firstName: googleUserData.given_name,
+        lastName: googleUserData.family_name,
+        email: googleUserData.email,
+        isEmailVerified: googleUserData.email_verified,
+        avatar: googleUserData.picture,
+      })
+    }
+
+    // Create JWT
+    const accessToken = JWTHandler.createAccessToken(userFromDb._id)
+    const refreshToken = JWTHandler.createRefreshToken(userFromDb._id)
+
+    res.json({
+      message: 'Login with google success.',
+      accessToken,
+      refreshToken,
+    })
+  } catch (e) {
+    console.log(`Error in file: ${__filename}!`)
+    console.log(e.message)
+    res.status(500).json({
+      errorType: 'Server side error!',
+      errorMsg: e.message,
+    })
+  }
+}
+
+async function emailVerification(req, res) {
+  try {
+    // const phone = req.body.phone
+    const { email } = req.body
+
+    // change user phone info in DB
+    const user = await UserModel.findOne({ email })
+
+    // Check phone already verified or no
+    if (user.isEmailVerified) {
+      return res.status(400).json({
+        errorType: 'Verified error!',
+        errorMessage: 'User email already verified.',
+      })
+    }
+
+    // Change isEmailVerified in DB
+    user.isEmailVerified = true
+    await user.save()
+
+    // Change confirm code status in DB
+    const codeInfo = await ConfirmCodeModel.findOne({
+      userId: user._id,
+    }).populate('userId')
+    codeInfo.isUsed = true
+    await codeInfo.save()
+
+    res.json({
+      message: 'User sent right code and email has been verified.',
+    })
+  } catch (e) {
+    console.log(`Error in file: ${__filename}!`)
+    console.log(e.message)
+    res.status(500).json({
+      errorType: 'Server side error!',
+      errorMessage: e.message,
+    })
+  }
+}
+
 module.exports = {
   register,
   loginWithEmail,
   getEmailToResetPassword,
   verificationCode,
   resetPassword,
+  loginWithGoogle,
+  emailVerification,
 }
