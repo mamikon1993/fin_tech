@@ -61,4 +61,7 @@ authRouter.post(
   authController.emailVerification
 )
 
+//search function
+// authRouter.get('/search', authController.search)
+
 module.exports = authRouter

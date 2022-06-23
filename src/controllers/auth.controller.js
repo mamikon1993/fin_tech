@@ -276,6 +276,25 @@ async function emailVerification(req, res) {
   }
 }
 
+// async function search(req, res, next) {
+//   try {
+//     let book = await req.query.name
+//     let arr = Object.keys(req.query)
+//       Books.find({
+//         name: { $regex: book, $options: '$i' },
+//       }).then((data) => {
+//         res.send(data)
+//       })
+//   } catch (e) {
+//     console.log(`Error in file: ${__filename}!`)
+//     console.log(e.message)
+//     res.status(500).json({
+//       errorType: 'Server side error!',
+//       errorMessage: e.message,
+//     })
+//   }
+// }
+
 module.exports = {
   register,
   loginWithEmail,
@@ -284,4 +303,5 @@ module.exports = {
   resetPassword,
   loginWithGoogle,
   emailVerification,
+  //search,
 }
