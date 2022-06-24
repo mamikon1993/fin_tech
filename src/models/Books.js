@@ -5,9 +5,10 @@ const userSchema = new Schema(
     name: { type: String },
     context: { type: String },
     category: { type: String },
+    Image: { type: String },
   },
   {
-    collection: 'books',
+    collection: 'Books',
     strict: false,
   }
 )

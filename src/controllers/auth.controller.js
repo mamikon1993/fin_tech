@@ -1,4 +1,6 @@
 const UserModel = require('../models/Users')
+const BooksModel = require('../models/Books')
+const GamesModel = require('../models/Games')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
@@ -10,6 +12,8 @@ const sendCodeToEmail = require('../utils/sendCodeToEmail')
 const generateCode = require('../utils/generateCode')
 const putConfirmCodeToDb = require('../utils/putCodeToDb')
 const JWTHandler = require('../services/jwtHandler')
+const Books = require('../models/Books')
+const e = require('express')
 
 async function register(req, res) {
   try {
@@ -276,6 +280,40 @@ async function emailVerification(req, res) {
   }
 }
 
+async function getAdultsBook(req, res) {
+  try {
+    const { category } = req.body
+
+    const adults = await BooksModel.find({ category })
+    const games = await GamesModel.find({ category })
+console.log("adults", adults);
+console.log("games", games);
+
+    if (adults.length > 0) {
+      res.json({
+        message: 'Book for Adults was found',
+        books: adults,
+      })
+    } else if (games.length > 0) {
+      res.json({
+        message: 'Book for Games was found',
+        books: games,
+      })
+    } else {
+      return res.status(400).json({
+        errorMsg: 'Category not found',
+      })
+    }
+  } catch (e) {
+    console.log(`Error in file: ${__filename}!`)
+    console.log(e.message)
+    res.status(500).json({
+      errorType: 'Server side error!',
+      errorMessage: e.message,
+    })
+  }
+}
+
 // async function search(req, res, next) {
 //   try {
 //     let book = await req.query.name
@@ -303,5 +341,7 @@ module.exports = {
   resetPassword,
   loginWithGoogle,
   emailVerification,
+  getAdultsBook,
   //search,
+  
 }

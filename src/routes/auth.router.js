@@ -61,6 +61,15 @@ authRouter.post(
   authController.emailVerification
 )
 
+//give book for Adults
+authRouter.post('/get_products', authController.getAdultsBook)
+
+//give book for Teens
+// authRouter.get('/bookForTeens', authController.getTeensBook)
+
+// //give Games
+// authRouter.get('/games', authController.getGames)
+
 //search function
 // authRouter.get('/search', authController.search)
 
