@@ -1,6 +1,7 @@
 const UserModel = require('../models/Users')
 const BooksModel = require('../models/Books')
 const GamesModel = require('../models/Games')
+const MessageModel = require('../models/Message')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
@@ -14,6 +15,7 @@ const putConfirmCodeToDb = require('../utils/putCodeToDb')
 const JWTHandler = require('../services/jwtHandler')
 const Books = require('../models/Books')
 const e = require('express')
+const Message = require('../models/Message')
 
 async function register(req, res) {
   try {
@@ -286,8 +288,8 @@ async function getAdultsBook(req, res) {
 
     const adults = await BooksModel.find({ category })
     const games = await GamesModel.find({ category })
-console.log("adults", adults);
-console.log("games", games);
+    console.log('adults', adults)
+    console.log('games', games)
 
     if (adults.length > 0) {
       res.json({
@@ -310,6 +312,30 @@ console.log("games", games);
     res.status(500).json({
       errorType: 'Server side error!',
       errorMessage: e.message,
+    })
+  }
+}
+
+async function sendMessage(req, res) {
+  try {
+    const { firstName, email, text } = req.body
+
+    const newQuestion = await MessageModel.create({
+      firstName,
+      email,
+      text,
+    })
+    if (newQuestion) {
+      res.status(201).json({
+        message: 'Message was sent.',
+      })
+    }
+  } catch (e) {
+    console.log(`Error in file: ${__filename}!`)
+    console.log(e.message)
+    res.status(500).json({
+      errorType: 'Server side error!',
+      errorMsg: e.message,
     })
   }
 }
@@ -342,6 +368,6 @@ module.exports = {
   loginWithGoogle,
   emailVerification,
   getAdultsBook,
+  sendMessage,
   //search,
-  
 }

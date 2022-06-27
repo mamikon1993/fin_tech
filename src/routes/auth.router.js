@@ -64,6 +64,14 @@ authRouter.post(
 //give book for Adults
 authRouter.post('/get_products', authController.getAdultsBook)
 
+//contact us message
+authRouter.post('/send_message', 
+validateEmail,
+validateFirstName,
+validationErrorHandler,
+authController.sendMessage
+)
+
 //give book for Teens
 // authRouter.get('/bookForTeens', authController.getTeensBook)
 
