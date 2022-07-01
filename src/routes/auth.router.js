@@ -31,12 +31,12 @@ authRouter.post(
 )
 
 // Login with email
-authRouter.post(
-  '/login',
-  isPasswordEmpty,
-  validationErrorHandler,
-  authController.loginWithEmail
-)
+// authRouter.post(
+//   '/login',
+//   isPasswordEmpty,
+//   validationErrorHandler,
+//   authController.loginWithEmail
+// )
 
 // Google login
 authRouter.post('/googleLogin', authController.loginWithGoogle)
