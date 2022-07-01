@@ -13,9 +13,6 @@ const sendCodeToEmail = require('../utils/sendCodeToEmail')
 const generateCode = require('../utils/generateCode')
 const putConfirmCodeToDb = require('../utils/putCodeToDb')
 const JWTHandler = require('../services/jwtHandler')
-const Books = require('../models/Books')
-const e = require('express')
-const Message = require('../models/Message')
 
 async function register(req, res) {
   try {
@@ -54,48 +51,7 @@ async function register(req, res) {
     })
   }
 }
-
-async function loginWithEmail(req, res) {
-  try {
-    const { email, password } = req.body
-
-    // Search user in DB
-    const user = await UserModel.findOne({ email })
-    // Check such username[phone] registered or not
-    if (!user) {
-      // User with such username[phone] not exist
-      return res.status(400).json({
-        errorType: 'Incorrect data error!',
-        errorMsg: 'You have entered an incorrect email or password',
-      })
-    }
-
-    // Check password
-    const isPasswordCorrect = await bcrypt.compare(password, user.password)
-
-    if (!isPasswordCorrect) {
-      return res.status(400).json({
-        errorType: 'Incorrect data error!',
-        errorMsg: 'You have entered an incorrect email or password',
-      })
-    }
-
-    // Create JWT
-    const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '7d',
-    })
-    res.json({ message: 'Login success.', accessToken })
-  } catch (e) {
-    console.log(`Error in file: ${__filename}!`)
-    console.log(e.message)
-    res.status(500).json({
-      errorType: 'Server side error!',
-      errorMsg: e.message,
-    })
-  }
-}
-
-async function getEmailToResetPassword(req, res) {
+async function verificationCode(req, res) {
   try {
     const { email } = req.body
 
@@ -128,8 +84,86 @@ async function getEmailToResetPassword(req, res) {
     })
   }
 }
+async function emailVerification(req, res) {
+  try {
+    // const phone = req.body.phone
+    const { email } = req.body
 
-async function verificationCode(req, res) {
+    // change user phone info in DB
+    const user = await UserModel.findOne({ email })
+
+    // Check phone already verified or no
+    if (user.isEmailVerified) {
+      return res.status(400).json({
+        errorType: 'Verified error!',
+        errorMessage: 'User email already verified.',
+      })
+    }
+
+    // Change isEmailVerified in DB
+    user.isEmailVerified = true
+    await user.save()
+
+    // Change confirm code status in DB
+    const codeInfo = await ConfirmCodeModel.findOne({
+      userId: user._id,
+    }).populate('userId')
+    codeInfo.isUsed = true
+    await codeInfo.save()
+
+    res.json({
+      message: 'User sent right code and email has been verified.',
+    })
+  } catch (e) {
+    console.log(`Error in file: ${__filename}!`)
+    console.log(e.message)
+    res.status(500).json({
+      errorType: 'Server side error!',
+      errorMessage: e.message,
+    })
+  }
+}
+// async function loginWithEmail(req, res) {
+//   try {
+//     const { email, password } = req.body
+
+//     // Search user in DB
+//     const user = await UserModel.findOne({ email })
+//     // Check such username[phone] registered or not
+//     if (!user) {
+//       // User with such username[phone] not exist
+//       return res.status(400).json({
+//         errorType: 'Incorrect data error!',
+//         errorMsg: 'You have entered an incorrect email or password',
+//       })
+//     }
+
+//     // Check password
+//     const isPasswordCorrect = await bcrypt.compare(password, user.password)
+
+//     if (!isPasswordCorrect) {
+//       return res.status(400).json({
+//         errorType: 'Incorrect data error!',
+//         errorMsg: 'You have entered an incorrect email or password',
+//       })
+//     }
+
+//     // Create JWT
+//     const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+//       expiresIn: '7d',
+//     })
+//     res.json({ message: 'Login success.', accessToken })
+//   } catch (e) {
+//     console.log(`Error in file: ${__filename}!`)
+//     console.log(e.message)
+//     res.status(500).json({
+//       errorType: 'Server side error!',
+//       errorMsg: e.message,
+//     })
+//   }
+// }
+
+async function getEmailToResetPassword(req, res) {
   try {
     const { email } = req.body
 
@@ -242,55 +276,12 @@ async function loginWithGoogle(req, res) {
   }
 }
 
-async function emailVerification(req, res) {
-  try {
-    // const phone = req.body.phone
-    const { email } = req.body
-
-    // change user phone info in DB
-    const user = await UserModel.findOne({ email })
-
-    // Check phone already verified or no
-    if (user.isEmailVerified) {
-      return res.status(400).json({
-        errorType: 'Verified error!',
-        errorMessage: 'User email already verified.',
-      })
-    }
-
-    // Change isEmailVerified in DB
-    user.isEmailVerified = true
-    await user.save()
-
-    // Change confirm code status in DB
-    const codeInfo = await ConfirmCodeModel.findOne({
-      userId: user._id,
-    }).populate('userId')
-    codeInfo.isUsed = true
-    await codeInfo.save()
-
-    res.json({
-      message: 'User sent right code and email has been verified.',
-    })
-  } catch (e) {
-    console.log(`Error in file: ${__filename}!`)
-    console.log(e.message)
-    res.status(500).json({
-      errorType: 'Server side error!',
-      errorMessage: e.message,
-    })
-  }
-}
-
-async function getAdultsBook(req, res) {
+async function getProducts(req, res) {
   try {
     const { category } = req.body
 
     const adults = await BooksModel.find({ category })
     const games = await GamesModel.find({ category })
-    console.log('adults', adults)
-    console.log('games', games)
-
     if (adults.length > 0) {
       res.json({
         message: 'Book for Adults was found',
@@ -340,24 +331,30 @@ async function sendMessage(req, res) {
   }
 }
 
-// async function search(req, res, next) {
-//   try {
-//     let book = await req.query.name
-//     let arr = Object.keys(req.query)
-//       Books.find({
-//         name: { $regex: book, $options: '$i' },
-//       }).then((data) => {
-//         res.send(data)
-//       })
-//   } catch (e) {
-//     console.log(`Error in file: ${__filename}!`)
-//     console.log(e.message)
-//     res.status(500).json({
-//       errorType: 'Server side error!',
-//       errorMessage: e.message,
-//     })
-//   }
-// }
+async function search(req, res, next) {
+  try {
+    let book = await req.query.name
+    // let game = await req.query.name
+    // if (book.length > 0){
+    BooksModel.find({
+      name: { $regex: book, $options: '$i' },
+    }).then((data) => {
+      res.send(data)
+    })
+    //} else {
+    //   return res.status(400).json({
+    //     errorMsg: 'Not found',
+    //   })
+    // }
+  } catch (e) {
+    console.log(`Error in file: ${__filename}!`)
+    console.log(e.message)
+    res.status(500).json({
+      errorType: 'Server side error!',
+      errorMessage: e.message,
+    })
+  }
+}
 
 module.exports = {
   register,
@@ -367,7 +364,7 @@ module.exports = {
   resetPassword,
   loginWithGoogle,
   emailVerification,
-  getAdultsBook,
+  getProducts,
   sendMessage,
-  //search,
+  search,
 }
