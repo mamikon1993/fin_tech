@@ -358,7 +358,7 @@ async function search(req, res, next) {
 
 module.exports = {
   register,
-  loginWithEmail,
+ // loginWithEmail,
   getEmailToResetPassword,
   verificationCode,
   resetPassword,
