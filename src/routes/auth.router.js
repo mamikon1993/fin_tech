@@ -45,7 +45,7 @@ authRouter.post('/googleLogin', authController.loginWithGoogle)
 authRouter.post('/forgot_password', authController.getEmailToResetPassword)
 
 //verification
-authRouter.post('/verification', authController.verificationCode)
+//authRouter.post('/verification', authController.verificationCode)
 
 // Send code and reset password
 authRouter.patch(
@@ -100,7 +100,7 @@ authRouter.post('/loginUser', function (req, res, next) {
             data: {
               firstName: user.firstName,
               lastName: user.lastName,
-              email: user.email
+              email: user.email,
             },
           })
         }

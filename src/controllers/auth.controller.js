@@ -38,10 +38,19 @@ async function register(req, res) {
       password: hashedPassword,
       email,
     })
+    console.log('ver', email)
+    const user = await UserModel.findOne({ email })
+
+      // Generate confirmCode, send and put in the DBemail
+    const confirmCode = generateCode()
+    sendCodeToEmail(email, confirmCode)
+    putConfirmCodeToDb(user._id, confirmCode)
+    console.log('confirmCode --->', confirmCode, '<---')
 
     res.status(201).json({
       message: 'Registration success.',
     })
+    
   } catch (e) {
     console.log(`Error in file: ${__filename}!`)
     console.log(e.message)
@@ -51,39 +60,39 @@ async function register(req, res) {
     })
   }
 }
-async function verificationCode(req, res) {
-  try {
-    const { email } = req.body
+// async function verificationCode(req, res) {
+//   try {
+//     const { email } = req.body
 
-    // Check user with such phone exist or not
-    const user = await UserModel.findOne({ email })
+//     // Check user with such phone exist or not
+//     const user = await UserModel.findOne({ email })
 
-    if (!user) {
-      // No such user case
-      return res.status(400).json({
-        errorType: 'Incorrect data error!',
-        errorMsg: 'User with such email not found',
-      })
-    }
+//     if (!user) {
+//       // No such user case
+//       return res.status(400).json({
+//         errorType: 'Incorrect data error!',
+//         errorMsg: 'User with such email not found',
+//       })
+//     }
 
-    // Generate confirmCode, send and put in the DB
-    const confirmCode = generateCode()
-    sendCodeToEmail(req.body.email, confirmCode)
-    putConfirmCodeToDb(user._id, confirmCode)
-    console.log('confirmCode --->', confirmCode, '<---')
+//     // Generate confirmCode, send and put in the DB
+//     const confirmCode = generateCode()
+//     sendCodeToEmail(req.body.email, confirmCode)
+//     putConfirmCodeToDb(user._id, confirmCode)
+//     console.log('confirmCode --->', confirmCode, '<---')
 
-    res.json({
-      message: `Password recovery code was send on the user's email`,
-    })
-  } catch (e) {
-    console.log(`Error in file: ${__filename}!`)
-    console.log(e.message)
-    res.status(500).json({
-      errorType: 'Server side error!',
-      errorMsg: e.message,
-    })
-  }
-}
+//     res.json({
+//       message: `Password recovery code was send on the user's email`,
+//     })
+//   } catch (e) {
+//     console.log(`Error in file: ${__filename}!`)
+//     console.log(e.message)
+//     res.status(500).json({
+//       errorType: 'Server side error!',
+//       errorMsg: e.message,
+//     })
+//   }
+// }
 async function emailVerification(req, res) {
   try {
     // const phone = req.body.phone
@@ -358,9 +367,9 @@ async function search(req, res, next) {
 
 module.exports = {
   register,
- // loginWithEmail,
+  // loginWithEmail,
   getEmailToResetPassword,
-  verificationCode,
+  //verificationCode,
   resetPassword,
   loginWithGoogle,
   emailVerification,
